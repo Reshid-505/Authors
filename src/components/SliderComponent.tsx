@@ -22,9 +22,9 @@ function SliderComponent() {
     const[authors,setAuthors]=useState<IAuthors[]>([])
     useEffect(() => {
           // const data: IAuthors[] = await getAuthors();
-          axios("http://localhost:3000/api/authors")
+          axios("http://localhost:3001/api/authors")
           .then((data)=>{
-            const allDatas:IAuthors[] = data.data.data
+            const allDatas:IAuthors[] = data.data
             setAuthors(allDatas);
           })
   

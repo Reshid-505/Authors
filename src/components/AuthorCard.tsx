@@ -25,7 +25,7 @@ function AuthorCard({author}:{author: IAuthors}) {
       cover={<img style={{height:300,objectFit:"cover"}} alt={author.name + "Image"} src={author.image} />}
       >
         <h1>{author.name}</h1>
-        {(author?.birthYear) && <h2>{!author?.isDead?date.getFullYear() - author?.birthYear + "years old":"Dead"}</h2>}
+        {(author?.birthYear) && <h2>{!author?.isDead?date.getFullYear() - author?.birthYear + " years old":"Dead"}</h2>}
         <h3>Genre:{author.genre}</h3>
         <h3>Gender:{author.gender?"Male":"Female"}</h3>
       </Card>

@@ -1,11 +1,23 @@
 "use client"
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button, Form, Input, Checkbox, Select, message, Upload  } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { ObjectId } from 'mongoose';
 
 const { Option } = Select;
+
+interface IAuthors {
+  _id: ObjectId;
+  name: string;
+  genre: string;
+  birthYear: number;
+  bio: string;
+  image: string;
+  isDead: boolean;
+  gender: boolean;
+}
 
 const beforeUpload = (file: any) => {
   const isJpgOrJpeg = file.type === 'image/jpeg' || file.type === 'image/jpeg';
@@ -33,42 +45,70 @@ type FieldType = {
 
 };
 
-function AddAuthor() {
+function EditAuthor({ params }: { params: { id: string } }) {
+  const {id} = params
+  const [authorData,setAuthorData] = useState<IAuthors | undefined>(undefined)
+  useEffect(()=>{
+    axios("http://localhost:3001/api/authors/"+id)
+    .then((res: {data:IAuthors}): void=>{
+      setAuthorData(res.data)
+    })
+  },[])
   const route = useRouter()
 
   const onFinish = (values: any) => {
-    // values.birthYear=Number(values.birthYear)
-    const cloudinaryData = new FormData();
-    cloudinaryData.append('file', values.file.file.originFileObj);
-    // cloudinaryData.append("api_key", "3PrFaOnCUcXQeJmW9YDdmiX2c48");
-    cloudinaryData.append('upload_preset', "bcq2gvnn");
-    axios.post("https://api.cloudinary.com/v1_1/dsnv3qe3n/image/upload",cloudinaryData)
-    .then((res)=>{
-        console.log(res.data);
-        const formData = new FormData();
-        formData.append('name', values.name);
-        formData.append('genre', values.genre);
-        formData.append('birthYear', values.birthYear);
-        formData.append('bio', values.bio);
-        formData.append('gender', values.gender);
-        formData.append('isDead', values.isDead);
-        formData.append('file', values.file.file.originFileObj);
-        formData.append('image', res.data.secure_url);
-      axios.post("http://localhost:3001/api/authors",formData)
-      .then((data)=>{
-        route.push("/authors")
-      })
-      })
+    if(values.file){
+      const cloudinaryData = new FormData();
+      cloudinaryData.append('file', values.file.file.originFileObj);
+      cloudinaryData.append('upload_preset', "bcq2gvnn");
+      axios.post("https://api.cloudinary.com/v1_1/dsnv3qe3n/image/upload",cloudinaryData)
+      .then((res)=>{
+          console.log(res.data);
+          const formData = new FormData();
+          formData.append('name', values.name);
+          formData.append('genre', values.genre);
+          formData.append('birthYear', values.birthYear);
+          formData.append('bio', values.bio);
+          formData.append('gender', values.gender);
+          formData.append('isDead', values.isDead);
+          formData.append('file', values.file.file.originFileObj);
+          formData.append('image', res.data.secure_url);
+        axios.patch("http://localhost:3001/api/authors/"+id,formData)
+        .then((data)=>{
+          route.push("/authors/"+id)
+        })
+        })
+    }else{
+          const formData = new FormData();
+          formData.append('name', values.name);
+          formData.append('genre', values.genre);
+          formData.append('birthYear', values.birthYear);
+          formData.append('bio', values.bio);
+          formData.append('gender', values.gender);
+          formData.append('isDead', values.isDead);
+        axios.patch("http://localhost:3001/api/authors/"+id,formData)
+        .then((data)=>{
+          route.push("/authors/"+id)
+        })
+    }
   };
   const date = new Date()
   return (
     <main className='conainer' style={{display:"flex",justifyContent:"center"}}>
+      {authorData && 
         <Form
           name="basic"
           labelCol={{ span: 8 }}
           wrapperCol={{ span: 16 }}
           style={{ maxWidth: 600, }}
-          initialValues={{ remember: true }}
+          initialValues={{ 
+            name: authorData?.name,
+            genre: authorData?.genre,
+            birthYear: authorData?.birthYear,
+            bio: authorData?.bio,
+            isDead: authorData?.isDead,
+            gender: authorData?.gender
+           }}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
           autoComplete="off"
@@ -143,26 +183,12 @@ function AddAuthor() {
           <Form.Item<FieldType>
             label="Image"
             name="file"
-            rules={[
-              { required: true, message: 'Please input bio!' },
-            ]}
           >
           <Upload
             action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188"
             listType="picture"
-            beforeUpload={beforeUpload}
-            onChange={function(info){
-              if (info.file.status !== 'uploading') {
-                // console.log(info.file, info.fileList);
-              }
-              if (info.file.status === 'done') {
-                message.success(`${info.file.name} file uploaded successfully`);
-              } else if (info.file.status === 'error') {
-                return Upload.LIST_IGNORE
-                message.error(`${info.file.name} file upload failed.`);
-              }
-            }}
             maxCount={1}
+            beforeUpload={beforeUpload}
           >
             <Button icon={<UploadOutlined />}>Click to Upload </Button>
           </Upload>
@@ -195,9 +221,9 @@ function AddAuthor() {
               Add
             </Button>
           </Form.Item>
-        </Form>
+        </Form>}
     </main>
   )
 }
 
-export default AddAuthor
+export default EditAuthor
